@@ -8,7 +8,8 @@ var Tsunami = function(opts) {
         chunkSize: 1*1024*1024,
         simultaneousUploads: 3,
         target: '/',
-        workerFile: 'tsunami_worker.js'
+        workerFile: 'tsunami_worker.js',
+        log: false
     };
     
     
@@ -53,7 +54,7 @@ var Tsunami = function(opts) {
     
     
     $.setupWorkers = function() {
-        console.log('Seting up workers');
+        $.log('Seting up workers');
         var workerHandler = function(e) {
             var data = e.data;
             if(!data.cmd)
@@ -64,7 +65,7 @@ var Tsunami = function(opts) {
                 case 'ready':
                     // does it have a file already?
                     if(data.hasFile == false)
-                        console.log(e);
+                        //console.log(e);
                         e.target.postMessage({
                             'cmd':'setFile',
                             'file': $.currentFile
@@ -84,11 +85,11 @@ var Tsunami = function(opts) {
                     } else {
                         // @TODO: move to next file
                         $.isUploading = false;
-                        console.log('Upload done')
+                        $.log('Upload done')
                     }
                     break;
                 case 'log':
-                    console.log('Worker said: '+data.message);
+                    $.log('Worker said: '+data.message);
                         
             }
         }
@@ -109,10 +110,15 @@ var Tsunami = function(opts) {
                 'cmd':'start'
             });
             $.workers.push(worker);
-            console.log('Worker '+num+" is created");
+            $.log('Worker '+num+" is created");
         }
     }    
 
+    $.log = function(message) {
+        if($.opts.log){
+            console.log(message);
+        }
+    }
     
     // Settings
     $.opts = opts||{};

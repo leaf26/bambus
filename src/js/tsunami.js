@@ -64,8 +64,8 @@ var Tsunami = function(opts) {
                 case 'ready':
                     // does it have a file already?
                     if(data.hasFile == false)
-                        //console.log(e);
-                        e.srcElement.postMessage({
+                        console.log(e);
+                        e.target.postMessage({
                             'cmd':'setFile',
                             'file': $.currentFile
                         })
@@ -75,7 +75,7 @@ var Tsunami = function(opts) {
                         if($.currentFile.size - endByte < $.opts.chunkSize)
                             endbyte = $.currentFile.size;
                         
-                        e.srcElement.postMessage({
+                        e.target.postMessage({
                             'cmd':'uploadChunk',
                             'startByte': $.currentStartByte,
                             'endByte': endByte

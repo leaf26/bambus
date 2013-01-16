@@ -61,6 +61,7 @@ function uploadChunk(startByte, endByte)
     xhr.setRequestHeader("Content-Disposition"," attachment; name='fileToUpload'"); 
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.setRequestHeader('X-Start-Byte', startByte);
     //Set up the body of the POST data includes the name & file data.
     xhr.send(blob);
 

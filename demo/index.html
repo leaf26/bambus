@@ -56,7 +56,8 @@
               var fs = new Tsunami({
                 uri: '/',
                 simultaneousUploads: 10,
-                chunkSize: 5*1024*1024
+                chunkSize: 5*1024*1024,
+                workerFile: '../src/js/tsunami_worker.js'
               });
               fs.addFiles(files);
               fs.upload();

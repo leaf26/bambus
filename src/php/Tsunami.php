@@ -167,7 +167,7 @@ class Tsunami {
     private function storeChunk($chunkFile, $startByte) {
         echo "Store Chunk\n";
         $ifd = fopen($chunkFile, 'r');
-        $ofd = fopen($this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte, 'w+');
+        $ofd = fopen($this->config['tmp_dir'].'/pre.'.md5($this->filename).'#'.$startByte, 'w+');
         echo $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte;
         $written = 0;
         while($data = fread($ifd, 1000000)){
@@ -175,6 +175,10 @@ class Tsunami {
         }
         fclose($ifd);
         fclose($ofd);
+
+        // Rename pre. This is done to prevent other thread from reading while writing is not complete
+        rename($this->config['tmp_dir'].'/pre.'.md5($this->filename).'#'.$startByte,
+               $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte)
 
         return $written;
     }

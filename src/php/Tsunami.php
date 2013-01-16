@@ -87,9 +87,7 @@ class Tsunami {
         $tempFiles = $this->getTempFiles();
 
         foreach($tempFiles as $tempFile){
-            echo "checkTempFile\n";
             if($this->filesize == $tempFile['startByte']){
-                echo "appendTempFile\n";
                 $this->filesize += $this->appendChunk($tempFile['name'], $tempFile['startByte']);
                 unlink($tempFile['name']);
             }else{
@@ -100,7 +98,6 @@ class Tsunami {
     }
 
     private function getTempFiles() {
-        echo "getTempFiles\n";
         $tempFiles = array();
 
         //get alls files starting with hash($this->filename).'#' from $this->config['tmp_dir'];
@@ -109,9 +106,6 @@ class Tsunami {
             $newTempFile['startByte'] = end(explode('#', $tempFile));
             $tempFiles[] = $newTempFile;
         }
-
-        var_dump(glob($this->config['tmp_dir'].'/'.md5($this->filename).'#*'));
-        var_dump($tempFiles);
 
         return $tempFiles;
     }
@@ -143,7 +137,6 @@ class Tsunami {
     }
 
     private function tryAppendChunk($chunkFile, $startByte){
-        echo $this->filesize .'=='. $startByte."\n";
         if($this->filesize == $startByte){
             $this->filesize += $this->appendChunk($chunkFile);
             return true;
@@ -168,7 +161,7 @@ class Tsunami {
         echo "Store Chunk\n";
         $ifd = fopen($chunkFile, 'r');
         $ofd = fopen($this->config['tmp_dir'].'/pre.'.md5($this->filename).'#'.$startByte, 'w+');
-        echo $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte;
+        
         $written = 0;
         while($data = fread($ifd, 1000000)){
             $written += fwrite($ofd, $data) or die("Error storing chunk to temp");
@@ -178,7 +171,7 @@ class Tsunami {
 
         // Rename pre. This is done to prevent other thread from reading while writing is not complete
         rename($this->config['tmp_dir'].'/pre.'.md5($this->filename).'#'.$startByte,
-               $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte)
+               $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte);
 
         return $written;
     }

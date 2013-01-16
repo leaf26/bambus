@@ -54,7 +54,7 @@
               var files = e.target.files;
           
               var fs = new Tsunami({
-                uri: 'upload.php',
+                uri: '../../demo/upload.php',/*relative to worker file*/
                 simultaneousUploads: 10,
                 chunkSize: 5*1024*1024,
                 workerFile: '../src/js/tsunami_worker.js'

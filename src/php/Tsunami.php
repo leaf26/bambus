@@ -8,16 +8,22 @@ class Tsunami {
     private $x,
             $filename,
             $fd,
-            $config=array('tmp_dir'=>sys_get_temp_dir());
+            $config;
 
     function __construct($filename, $config=array()) {
         $this->filename = $filename;
-        array_merge($this->config, $config);
+        $this->config = array_merge($this->defaultConfig(), $config);
 
         $this->fd = fopen($this->filename, 'a');
         if($this->fd === false){
-            return false;
+            die('Failed to create or open file');
         }
+    }
+
+    private function defaultConfig() {
+        return array(
+            'tmp_dir'=>sys_get_temp_dir()
+        );
     }
 
     public function processChunk($chunkFile = null, $startByte = null) {
@@ -32,16 +38,22 @@ class Tsunami {
                 header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
                 die('X-Start-Byte header not set');
             }else{
-                // OK header is set. We can continue.
+                $startByte = $_SERVER['HTTP_X_START_BYTE'];
             }
         }else{
             // user suppplied start byte
         }
 
+        echo "process chunk $chunkFile with sb $startByte\n";
+        
         // Lock destination file
         if(flock($this->fd, LOCK_EX)){
             try{
                 $this->filesize = $this->checkFileSize();
+
+                if($this->filesize > $startByte){
+                    die('Unable to append chunk. Start Byte is smaller then current filesize');
+                }
                 
                 if(!$this->tryAppendChunk($chunkFile, $startByte)){
                     $this->appendPendingTempFiles();
@@ -66,17 +78,20 @@ class Tsunami {
             return $this->filesize;
         }else{
             // Lock FAIL
+            echo "Lock Fail\n";
             $this->storeChunk($chunkFile, $startByte);
         }
     }
 
     private function appendPendingTempFiles(){
-        $tempfiles = $this->getTempFiles();
+        $tempFiles = $this->getTempFiles();
 
-        foreach($tempfiles as $tempfile){
-            if($this->filesize+1 == $tempfile['startByte']){
-                $this->filesize += $this->appendChunk($tempfile['name'], $tempfile['startByte']);
-                unlink($tempfile['name']);
+        foreach($tempFiles as $tempFile){
+            echo "checkTempFile\n";
+            if($this->filesize == $tempFile['startByte']){
+                echo "appendTempFile\n";
+                $this->filesize += $this->appendChunk($tempFile['name'], $tempFile['startByte']);
+                unlink($tempFile['name']);
             }else{
                 // Exit foreach loop: We can never append the rest of the chunks
                 return $this->filesize;
@@ -85,31 +100,41 @@ class Tsunami {
     }
 
     private function getTempFiles() {
+        echo "getTempFiles\n";
+        $tempFiles = array();
+
         //get alls files starting with hash($this->filename).'#' from $this->config['tmp_dir'];
-        return glob($this->config['tmp_dir'].md5($this->filename).'#*');
+        foreach(glob($this->config['tmp_dir'].'/'.md5($this->filename).'#*') as $tempFile){
+            $newTempFile['name'] = $tempFile;
+            $newTempFile['startByte'] = end(explode('#', $tempFile));
+            $tempFiles[] = $newTempFile;
+        }
+
+        var_dump(glob($this->config['tmp_dir'].'/'.md5($this->filename).'#*'));
+        var_dump($tempFiles);
+
+        return $tempFiles;
     }
 
     /* 
-     * checkFileSize from FileSender Project www.filesender.org
+     * Modified checkFileSize from FileSender Project www.filesender.org
      * 
      * Copyright (c) 2009-2012, AARNet, Belnet, HEAnet, SURFnet, UNINETT
      * All rights reserved.
      */
     private function checkFileSize() {
-        $fileLocation = $this->filename;
-        if (file_exists($fileLocation)) {
+        if (file_exists($this->filename)) {
             //We should turn this into a switch/case, exhaustive with a default case
             if (PHP_OS == "Darwin") {
-                $size = trim(shell_exec("stat -f %z ". escapeshellarg($fileLocation)));
+                $size = trim(shell_exec("stat -f %z ". escapeshellarg($this->filename)));
             }
-            else if (!(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN'))
-            {
-                $size = trim(shell_exec("stat -c%s ". escapeshellarg($fileLocation)));
+            else if (!(strtoupper(substr(PHP_OS, 0, 3)) == 'WIN')) {
+                $size = trim(shell_exec("stat -c%s ". escapeshellarg($this->filename)));
             }
             else {
-                     $fsobj = new COM("Scripting.FileSystemObject");
-                     $f = $fsobj->GetFile($fileLocation);
-                     $size = $f->Size;
+                $fsobj = new COM("Scripting.FileSystemObject");
+                $f = $fsobj->GetFile($this->filename);
+                $size = $f->Size;
             }
             return $size;
         } else {
@@ -118,7 +143,8 @@ class Tsunami {
     }
 
     private function tryAppendChunk($chunkFile, $startByte){
-        if($this->filesize+1 == $startByte){
+        echo $this->filesize .'=='. $startByte."\n";
+        if($this->filesize == $startByte){
             $this->filesize += $this->appendChunk($chunkFile);
             return true;
         }
@@ -127,10 +153,11 @@ class Tsunami {
     }
 
     private function appendChunk($chunkFile) {
-        $ifd = fopen($chunkFile, 'r')
+        echo "Append Chunk: $chunkFile\n";
+        $ifd = fopen($chunkFile, 'r');
         $written = 0;
         while($data = fread($ifd, 1000000)){
-            $written += fwrite($this->fd, $data) or die("Error");
+            $written += fwrite($this->fd, $data) or die("Error appending chunk");
         }
         fclose($ifd);
         
@@ -138,11 +165,13 @@ class Tsunami {
     }
 
     private function storeChunk($chunkFile, $startByte) {
-        $ifd = fopen($chunkFile, 'r')
-        $ofd = fopen($this->config['tmp_dir'].md5($this->filename).'#'.$startByte. 'w+');
+        echo "Store Chunk\n";
+        $ifd = fopen($chunkFile, 'r');
+        $ofd = fopen($this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte, 'w+');
+        echo $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte;
         $written = 0;
         while($data = fread($ifd, 1000000)){
-            $written += fwrite($ofd, $data) or die("Error");
+            $written += fwrite($ofd, $data) or die("Error storing chunk to temp");
         }
         fclose($ifd);
         fclose($ofd);

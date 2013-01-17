@@ -49,8 +49,30 @@ var Tsunami = function(opts) {
         $.currentFile = $.files[0];
 
         $.isUploading = true;
-        // Init workers
-        $.setupWorkers();
+
+        // check if we can resume the file
+        // and then start the workers
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = processReqChange;
+        function processReqChange(){
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+
+                    var response = JSON.parse(xhr.responseText);
+                    $.currentStartByte = response.filesize;
+                    // Start workers
+                    $.setupWorkers();
+
+                }
+            }
+        };
+        xhr.open("POST", $.opts.uri, true); //Open a request to the web address set
+        xhr.setRequestHeader("Content-Disposition"," attachment; name='fileToUpload'"); 
+        xhr.setRequestHeader("Content-Type", "application/octet-stream");
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('X-Start-Byte', 0);
+        xhr.setRequestHeader('X-File-Size', $.currentFile.size);
+        xhr.send();
     };
     
     

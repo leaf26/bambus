@@ -64,6 +64,7 @@ var Tsunami = function(opts) {
             
             switch (data.cmd) {
                 case 'ready':
+                    $.workersInProgress--;
                     // does it have a file already?
                     if(data.hasFile == false)
                         //console.log(e);

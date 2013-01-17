@@ -8,7 +8,8 @@ class Tsunami {
     private $x,
             $filename,
             $fd,
-            $config;
+            $config,
+            $jsonReply=array();
 
     function __construct($filename, $config=array()) {
         $this->filename = $filename;
@@ -16,7 +17,7 @@ class Tsunami {
 
         $this->fd = fopen($this->filename, 'a');
         if($this->fd === false){
-            die('Failed to create or open file');
+            $this->sendReply('error', 'Failed to create or open file');
         }
     }
 
@@ -35,8 +36,7 @@ class Tsunami {
 
         if($startByte == null){
             if(!isset($_SERVER['HTTP_X_START_BYTE'])){
-                header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error', true, 500);
-                die('X-Start-Byte header not set');
+                $this->sendReply('error', 'X-Start-Byte header not set');
             }else{
                 $startByte = $_SERVER['HTTP_X_START_BYTE'];
             }
@@ -44,15 +44,15 @@ class Tsunami {
             // user suppplied start byte
         }
 
-        echo "process chunk $chunkFile with sb $startByte\n";
+        $this->jsonReply['log'] .= "process chunk $chunkFile with sb $startByte\n";
         
-        // Lock destination file
+        // Lock destination file (blocking)
         if(flock($this->fd, LOCK_EX)){
             try{
                 $this->filesize = $this->checkFileSize();
 
                 if($this->filesize > $startByte){
-                    die('Unable to append chunk. Start Byte is smaller then current filesize');
+                    $this->sendReply('warning', 'Unable to append chunk. Start Byte is smaller then current filesize');
                 }
                 
                 if(!$this->tryAppendChunk($chunkFile, $startByte)){
@@ -74,13 +74,12 @@ class Tsunami {
             }
             // Release the lock
             flock($this->fd, LOCK_UN);
-
-            return $this->filesize;
         }else{
             // Lock FAIL
-            echo "Lock Fail\n";
             $this->storeChunk($chunkFile, $startByte);
         }
+
+        $this->sendReply();
     }
 
     private function appendPendingTempFiles(){
@@ -107,7 +106,15 @@ class Tsunami {
             $tempFiles[] = $newTempFile;
         }
 
+        usort($tempFiles, array($this, 'startByteSort'));
         return $tempFiles;
+    }
+
+    private function startByteSort($a, $b){
+        if ($a['startByte'] == $b['startByte']) {
+            return 0;
+        }
+        return ($a['startByte'] < $b['startByte']) ? -1 : 1;
     }
 
     /* 
@@ -116,7 +123,7 @@ class Tsunami {
      * Copyright (c) 2009-2012, AARNet, Belnet, HEAnet, SURFnet, UNINETT
      * All rights reserved.
      */
-    private function checkFileSize() {
+    public function checkFileSize() {
         if (file_exists($this->filename)) {
             //We should turn this into a switch/case, exhaustive with a default case
             if (PHP_OS == "Darwin") {
@@ -146,11 +153,11 @@ class Tsunami {
     }
 
     private function appendChunk($chunkFile) {
-        echo "Append Chunk: $chunkFile\n";
+        $this->jsonReply['log'] .= "Append Chunk: $chunkFile\n";
         $ifd = fopen($chunkFile, 'r');
         $written = 0;
         while($data = fread($ifd, 1000000)){
-            $written += fwrite($this->fd, $data) or die("Error appending chunk");
+            $written += fwrite($this->fd, $data) or $this->sendReply('error', 'Error appending chunk');
         }
         fclose($ifd);
         
@@ -158,13 +165,13 @@ class Tsunami {
     }
 
     private function storeChunk($chunkFile, $startByte) {
-        echo "Store Chunk\n";
+        $this->jsonReply['log'] .= "Store Chunk\n";
         $ifd = fopen($chunkFile, 'r');
         $ofd = fopen($this->config['tmp_dir'].'/pre.'.md5($this->filename).'#'.$startByte, 'w+');
         
         $written = 0;
         while($data = fread($ifd, 1000000)){
-            $written += fwrite($ofd, $data) or die("Error storing chunk to temp");
+            $written += fwrite($ofd, $data) or $this->sendReply('error', 'Error storing chunk to temp');
         }
         fclose($ifd);
         fclose($ofd);
@@ -174,6 +181,18 @@ class Tsunami {
                $this->config['tmp_dir'].'/'.md5($this->filename).'#'.$startByte);
 
         return $written;
+    }
+
+    private function sendReply($status='ok', $message=''){
+        $this->jsonReply['status'] = $status;
+        $this->jsonReply['message'] =  $message;
+        $this->jsonReply['filesize'] = $this->filesize;
+
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Content-type: application/json');
+        echo json_encode($this->jsonReply);
+        die();
     }
 
 }

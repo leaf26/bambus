@@ -53,10 +53,13 @@ self.addEventListener('message' , function(e) {
 
 function uploadChunk(startByte, endByte)
 {   
+    var uploaded = 0;
+    
     var blob = file[func](startByte, endByte);
     
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = processReqChange;
+    xhr.upload.progress = updateProgress;
     xhr.open("POST", uri, true); //Open a request to the web address set
     xhr.setRequestHeader("Content-Disposition"," attachment; name='fileToUpload'"); 
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
@@ -65,6 +68,16 @@ function uploadChunk(startByte, endByte)
     xhr.setRequestHeader('X-File-Size', file.size);
     //Set up the body of the POST data includes the name & file data.
     xhr.send(blob);
+
+    function updateProgress(e){
+        if(e.lengthComputable) {
+            postMessage({
+                'cmd' : 'progress',
+                'uploaded': (e.loaded - uploaded)
+            });
+            uploaded = e.loaded;
+        }
+    }
 
     function processReqChange(){
         if (xhr.readyState == 4) {

@@ -124,6 +124,7 @@ var Tsunami = function(opts) {
             });
             $.workers.push(worker);
             $.log('Worker '+num+" is created");
+            $.workerInProgress++;
         }
     }    
 

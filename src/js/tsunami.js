@@ -19,6 +19,20 @@ var Tsunami = function(opts) {
     $.files = [];
     $.currentStartByte = 0;
     $.workersInProgress = 0;
+    $.currentProgress = 0;
+    
+    // Fire events
+    $.trigger = function(type, data){
+        // get callback from settings
+        var callback = $.opts[type];
+        // get data
+        data = data || {};
+        
+        // check if callback is a function
+        if(callback != undefined && typeof(callback)=='function') {
+            callback.apply($, data);
+        }
+    }
     
     
     $h = {
@@ -59,7 +73,7 @@ var Tsunami = function(opts) {
                 if (xhr.status == 200) {
 
                     var response = JSON.parse(xhr.responseText);
-                    $.currentStartByte = response.filesize;
+                    $.currentSatrtByte = response.filesize;
                     // Start workers
                     $.setupWorkers();
 
@@ -123,11 +137,19 @@ var Tsunami = function(opts) {
                                 'startByte': $.currentStartByte,
                                 'endByte': $.currentStartByte
                             });
+                        } if ($.workersInProgress == -1) {
+                            // previous empty chunk was send
+                            $.trigger('onComplete');
                         }
                     }
                     break;
                 case 'log':
                     $.log('Worker said: '+data.message);
+                    break;
+                case 'progress':
+                    $.currentProgress += data.uploaded;
+                    $.trigger('onProgress', [$.currentProgress, $.currentFile.size]);
+                    break;
                         
             }
         }

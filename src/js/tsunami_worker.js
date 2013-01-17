@@ -59,7 +59,7 @@ function uploadChunk(startByte, endByte)
     
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = processReqChange;
-    xhr.upload.progress = updateProgress;
+    //xhr.onprogress = updateProgress;
     xhr.open("POST", uri, true); //Open a request to the web address set
     xhr.setRequestHeader("Content-Disposition"," attachment; name='fileToUpload'"); 
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
@@ -70,13 +70,11 @@ function uploadChunk(startByte, endByte)
     xhr.send(blob);
 
     function updateProgress(e){
-        if(e.lengthComputable) {
-            postMessage({
-                'cmd' : 'progress',
-                'uploaded': (e.loaded - uploaded)
-            });
-            uploaded = e.loaded;
-        }
+        postMessage({
+            'cmd' : 'progress',
+            'uploaded': (e.loaded - uploaded)
+        });
+        uploaded = e.loaded;
     }
 
     function processReqChange(){
@@ -86,6 +84,10 @@ function uploadChunk(startByte, endByte)
                 {
                     return;			
                 }
+                postMessage({
+                   'cmd': 'progress',
+                   'uploaded': endByte - startByte
+                });
                 postMessage({
                     'cmd':'ready'
                 });

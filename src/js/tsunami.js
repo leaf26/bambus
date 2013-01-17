@@ -18,7 +18,8 @@ var Tsunami = function(opts) {
     $.workers = [];
     $.files = [];
     $.currentStartByte = 0;
-    $.currentFile;
+    $.workersInProgress = 0;
+    
     
     $h = {
         each: function(o,callback){
@@ -81,11 +82,23 @@ var Tsunami = function(opts) {
                             'startByte': $.currentStartByte,
                             'endByte': endByte
                         });
+                        $.workersInProgress++;
                         $.currentStartByte = endByte;
                     } else {
                         // @TODO: move to next file
                         $.isUploading = false;
-                        $.log('Upload done')
+                        $.workersInProgress--;
+                        $.log('Upload done');
+                        
+                        // Check if all workers are done
+                        // and send empty chunk to let the server
+                        // clean up
+                        if($.workersInProgress == 0)
+                            e.target.postMessage({
+                               'cmd':'uploadChunk',
+                               'startByte': $.currentStartByte,
+                               'endByte': $.currentStartByte
+                            });
                     }
                     break;
                 case 'log':

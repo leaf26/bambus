@@ -66,17 +66,19 @@ var Tsunami = function(opts) {
                 case 'ready':
                     $.workersInProgress--;
                     // does it have a file already?
-                    if(data.hasFile == false)
+                    if(data.hasFile == false) {
                         //console.log(e);
                         e.target.postMessage({
                             'cmd':'setFile',
                             'file': $.currentFile
                         })
+                    }
                     // upload next chunk
                     if($.currentStartByte < $.currentFile.size){
                         var endByte = $.currentStartByte + $.opts.chunkSize;
-                        if($.currentFile.size - endByte < $.opts.chunkSize)
-                            endbyte = $.currentFile.size;
+                        if($.currentFile.size - endByte < $.opts.chunkSize) {
+                            endByte = $.currentFile.size;
+                        }
                         
                         e.target.postMessage({
                             'cmd':'uploadChunk',
@@ -93,12 +95,13 @@ var Tsunami = function(opts) {
                         // Check if all workers are done
                         // and send empty chunk to let the server
                         // clean up
-                        if($.workersInProgress == 0)
+                        if($.workersInProgress == 0) {
                             e.target.postMessage({
-                               'cmd':'uploadChunk',
-                               'startByte': $.currentStartByte,
-                               'endByte': $.currentStartByte
+                                'cmd':'uploadChunk',
+                                'startByte': $.currentStartByte,
+                                'endByte': $.currentStartByte
                             });
+                        }
                     }
                     break;
                 case 'log':
@@ -124,7 +127,7 @@ var Tsunami = function(opts) {
             });
             $.workers.push(worker);
             $.log('Worker '+num+" is created");
-            $.workerInProgress++;
+            $.workersInProgress++;
         }
     }    
 

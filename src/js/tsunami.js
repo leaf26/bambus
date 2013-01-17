@@ -88,7 +88,6 @@ var Tsunami = function(opts) {
                     } else {
                         // @TODO: move to next file
                         $.isUploading = false;
-                        $.workersInProgress--;
                         $.log('Upload done');
                         
                         // Check if all workers are done

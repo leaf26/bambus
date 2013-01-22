@@ -23,7 +23,8 @@ class Tsunami {
 
     private function defaultConfig() {
         return array(
-            'tmp_dir'=>sys_get_temp_dir()
+            'tmp_dir'=>sys_get_temp_dir(),
+            'reply_log'=>false
         );
     }
 
@@ -190,10 +191,14 @@ class Tsunami {
         $this->jsonReply['message'] =  $message;
         $this->jsonReply['filesize'] = $this->filesize;
 
+        if(!$this->config['reply_log']){
+            unset($this->jsonReply['log']);
+        }
+
         header('Cache-Control: no-cache, must-revalidate');
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
         header('Content-type: application/json');
-        echo json_encode($this->jsonReply);
+        echo json_encode( $this->jsonReply);
         die();
     }
 

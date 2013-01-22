@@ -7,6 +7,7 @@ var Tsunami = function(opts) {
     $.defaults = {
         chunkSize: 1*1024*1024,
         simultaneousUploads: 3,
+        jobsPerWorker: 1,
         target: '/',
         workerFile: 'tsunami_worker.js',
         log: false
@@ -73,7 +74,9 @@ var Tsunami = function(opts) {
                 if (xhr.status == 200) {
 
                     var response = JSON.parse(xhr.responseText);
-                    $.currentSatrtByte = response.filesize;
+                    $.currentStartByte = parseInt(response.filesize);
+                    $.currentProgress = $.currentStartByte;
+                    $.log('Server filesize response: "'+response.filesize+'"')
                     // Start workers
                     $.setupWorkers();
 
@@ -112,9 +115,10 @@ var Tsunami = function(opts) {
                     // upload next chunk
                     if($.currentStartByte < $.currentFile.size){
                         var endByte = $.currentStartByte + $.opts.chunkSize;
-                        if($.currentFile.size - endByte < $.opts.chunkSize) {
+                        if($.currentStartByte + $.opts.chunkSize > $.currentFile.size) {
                             endByte = $.currentFile.size;
                         }
+                        $.log('Calculated end byte: '+ endByte);
                         
                         e.target.postMessage({
                             'cmd':'uploadChunk',
@@ -137,7 +141,8 @@ var Tsunami = function(opts) {
                                 'startByte': $.currentStartByte,
                                 'endByte': $.currentStartByte
                             });
-                        } if ($.workersInProgress == -1) {
+                        }
+                        if ($.workersInProgress == -1) {
                             // previous empty chunk was send
                             $.trigger('onComplete');
                         }
@@ -166,12 +171,15 @@ var Tsunami = function(opts) {
                 'cmd':'setUri',
                 'uri':$.opts.uri
             });
-            worker.postMessage({
-                'cmd':'start'
-            });
+            for(var j=0; j<$.opts.jobsPerWorker; j++) {
+                worker.postMessage({
+                    'cmd':'start'
+                });
+                $.workersInProgress++;
+            }
             $.workers.push(worker);
             $.log('Worker '+num+" is created");
-            $.workersInProgress++;
+            
         }
     }    
 

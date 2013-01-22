@@ -17,7 +17,7 @@ class Tsunami {
 
         $this->fd = fopen($this->filename, 'a');
         if($this->fd === false){
-            $this->sendReply('error', 'Failed to create or open file');
+            $this->sendReply('error', 'Failed to create or open file'.$php_errormsg);
         }
     }
 
@@ -88,6 +88,8 @@ class Tsunami {
         foreach($tempFiles as $tempFile){
             if($this->filesize == $tempFile['startByte']){
                 $this->filesize += $this->appendChunk($tempFile['name'], $tempFile['startByte']);
+                unlink($tempFile['name']);
+            }else if($this->filesize > $tempFile['startByte']){
                 unlink($tempFile['name']);
             }else{
                 // Exit foreach loop: We can never append the rest of the chunks

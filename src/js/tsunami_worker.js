@@ -94,7 +94,7 @@ function uploadChunk(startByte, endByte)
             } else {
                 postMessage({
                     'cmd':'error',
-                    'message': 'There was a problem retrieving the data:\n' + req.statusText
+                    'message': 'There was a problem retrieving the data:\n' + xhr.statusText
                 });
             }
         }else{

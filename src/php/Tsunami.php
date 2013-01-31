@@ -31,7 +31,7 @@ class Tsunami {
             $filename,
             $fd,
             $config,
-            $jsonReply=array();
+            $jsonReply=array('log'=>'');
 
     function __construct($filename, $config=array()) {
         $this->filename = $filename;
@@ -124,7 +124,7 @@ class Tsunami {
     private function getTempFiles() {
         $tempFiles = array();
 
-        //get alls files starting with hash($this->filename).'#' from $this->config['tmp_dir'];
+        // Get all files starting with hash($this->filename).'#' from $this->config['tmp_dir'];
         foreach(glob($this->config['tmp_dir'].'/'.md5($this->filename).'#*') as $tempFile){
             $newTempFile['name'] = $tempFile;
             $newTempFile['startByte'] = end(explode('#', $tempFile));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, René Klomp, Edwin Schaap
+ * Copyright (c) 2013, René Klomp, Edwin Schaap
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without

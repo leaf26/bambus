@@ -1,5 +1,5 @@
 <?php
-require '../src/php/Tsunami.php';
+require '../src/php/Bambus.php';
 
-$fs = new Tsunami('target.file');
+$fs = new Bambus('target.file');
 $fs->processChunk();

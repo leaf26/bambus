@@ -2,6 +2,6 @@
 
 Simple usage:
 ```PHP
-$fs = new FileSenderJS('/var/www/target.file');
+$fs = new Bambus('/var/www/target.file');
 $fs->processChunk();
 ```

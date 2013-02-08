@@ -25,9 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-var Tsunami = function(opts) {
-    if ( !(this instanceof Tsunami)) {
-        return new Tsunami(opts);
+var Bambus = function(opts) {
+    if ( !(this instanceof Bambus)) {
+        return new Bambus(opts);
     }
     
     var $ = this;
@@ -36,7 +36,7 @@ var Tsunami = function(opts) {
         simultaneousUploads: 3,
         jobsPerWorker: 1,
         target: '/',
-        workerFile: 'tsunami_worker.js',
+        workerFile: 'bambus_worker.js',
         log: false
     };
     

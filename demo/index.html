@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Tsunami Uploader</title>
+        <title>Bambus Uploader</title>
         <meta charset="utf-8" />
         <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
 
@@ -27,8 +27,8 @@
         <div class="container-small">
 
             <div class="jumbotron">
-                <h1>Tsunami Uploader</h1>
-                <p class="lead">Tsunami provides faster file uploading by using HTML5 webworkers.</p>
+                <h1>Bambus Uploader</h1>
+                <p class="lead">Bambus provides faster file uploading by using HTML5 webworkers.</p>
             </div>
 
             <hr>
@@ -37,7 +37,7 @@
                 <div class="span12">
                     <h3>Demo</h3>
 
-                    <script src="../src/js/tsunami.js"></script>
+                    <script src="../src/js/bambus.js"></script>
 
                     <div class="demo">
                         <input type="file" id="fileUpload" name="files[]" style="display:none"/>
@@ -53,11 +53,11 @@
                             $('#filename').val(e.target.value);
               
                             var files = e.target.files;
-                            var fs = new Tsunami({
-                                uri: '/tsunami/demo/upload.php',/*relative to worker file*/
+                            var fs = new Bambus({
+                                uri: '/bambus/demo/upload.php',/*relative to worker file*/
                                 simultaneousUploads: 10,
                                 chunkSize: 5*1024*1024,
-                                workerFile: '/tsunami/src/js/tsunami_worker.js',
+                                workerFile: '/bambus/src/js/bambus_worker.js',
                                 onProgress: function(loaded, total){
                                     $('#progress').html('total: '+total+ ', loaded: '+loaded);
                                 },
